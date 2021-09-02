@@ -1,0 +1,13 @@
+dataset_name: 'testpj'
+categorys: ['real', 'fake']
+origin_path: '/home/kezhiying/testpj/ori'
+train_path: '/data_activate/kezhiying/testpj/data/train'
+valid_path: '/data_activate/kezhiying/testpj/data/valid'
+test_path: '/data_activate/kezhiying/testpj/data/test'
+origin_list_path: '/home/kezhiying/testpj/ori_list.txt'
+train_list_path: '/home/kezhiying/testpj/train_list.txt'
+valid_list_path: '/home/kezhiying/testpj/valid_list.txt'
+test_list_path: '/home/kezhiying/testpj/test_list.txt'
+train_ratio: 0.6
+valid_ratio: 0.2
+test_ratio: 0.2

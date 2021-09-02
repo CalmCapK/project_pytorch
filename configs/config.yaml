@@ -1,0 +1,89 @@
+config_name: 'base'
+
+mode: 'train'  #train, test, infer
+gpu: [0,1]
+local_rank: 0
+world_size: 2
+workers: 6
+seed: 111
+
+use_amp: False
+parallel_type: 'Distributed_Apex'  # Single , DataParallel, Distributed, Distributed_Apex, Horovod 
+data_type: 'ffac'
+
+model_type: 'resnet50'
+optimizer_type: 'SGD'  # SGD、Adam
+schedule_type: 'poly'
+pretrained: True
+
+is_load_model: False #train 和 test和 infer需要加载
+from_interruption: False #train 需要设置
+save_freq : 5
+
+datasets:
+    dataset1:
+        dataset_name: 'testpj'
+        categorys: ['fake', 'real', 'tmp']
+        #dataset_path
+        train_path: '/home/kezhiying/testpj/data/train'
+        valid_path: '/home/kezhiying/testpj/data/valid'
+        test_path: '/home/kezhiying/testpj/data/test'
+        infer_path: '/home/kezhiying/testpj/ori/fake'
+        #dataset_list_path
+        train_list_path: '/home/kezhiying/testpj/txt_3/train_list.txt'
+        valid_list_path: '/home/kezhiying/testpj/txt_3/valid_list.txt'
+        test_list_path: '/home/kezhiying/testpj/txt_3/est_list.txt'
+        infer_list_path: './tmp.txt'
+
+    dataset2:
+        dataset_name: 'testpj'
+        categorys: ['real', 'fake']
+        #dataset_list_path
+        train_list_path: '/home/kezhiying/testpj/txt_2/train_list.txt'
+        valid_list_path: '/home/kezhiying/testpj/txt_2/valid_list.txt'
+        test_list_path: '/home/kezhiying/testpj/txt_2/test_list.txt'
+        infer_list_path: './tmp.txt'
+    
+    ffac:
+        ataset_name: 'ffac'
+        categorys: ['real', 'fake']
+        #dataset_list_path
+        train_list_path: '/home/kezhiying/df_datasets_list/ffac/ffac_train_10fold/new_0.txt'
+        valid_list_path: '/home/kezhiying/df_datasets_list/ffac/val_image_list.txt'
+        test_list_path: '/home/kezhiying/testpj/txt_2/test_list.txt'
+        infer_list_path: './tmp.txt'
+
+save:
+    result_path: './results'
+    save_model_path: './results/models'
+    train_checkpoint_file: './results/train_checkpoint.csv'
+    valid_checkpoint_file: './results/valid_checkpoint.csv'
+    test_checkpoint_file: './results/test_checkpoint.csv'
+    test_ans_file: './results/test_ans.csv'
+    infer_ans_file: './results/infer_ans.csv'
+    log_path: './results/log'
+
+load:
+    load_model_path: './results/models/resnet50_epoch_0_best.pth'
+
+model_params:
+    resnet50:
+        image_size: 224
+        num_classes : 2
+        num_epochs: 50
+        batch_size : 18 #64
+
+optimizer_params:
+    SGD:
+        lr: 0.1 #0.01
+        momentum: 0.9
+        weight_decay: 1e-4
+    Adam:
+        lr: 0.1
+
+schedule_params:
+    poly:
+      
+
+
+
