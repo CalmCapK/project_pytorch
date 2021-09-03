@@ -12,6 +12,7 @@ import torch.nn.functional as F
 
 
 from dataset.data_loader import get_loader, get_infer_image
+from networks.losses import get_loss
 from networks.networks import build_model
 from networks.opt import adjust_learning_rate, get_optimizer
 from pipelines.train import train_epoch
@@ -20,7 +21,7 @@ from tools.utils import init_seed, record_epoch, load_model, save_model, write_r
 
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" # 按照PCI_BUS_ID顺序从0开始排列GPU设备
-os.environ["CUDA_VISIBLE_DEVICES"] = "3,5"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 
 class Solver(object):
@@ -77,9 +78,9 @@ class Solver(object):
         # criterion & optimizer
         #Distributed_4: 为了进一步加快训练速度，可以把损失函数也进行分布式计算???
         if config.parallel_type == 'Distributed' or config.parallel_type == 'Distributed_Apex' or config.parallel_type == 'Horovod':
-            self.criterion = torch.nn.CrossEntropyLoss().cuda(config.local_rank)
+            self.criterion = get_loss(config.loss_type).cuda(config.local_rank)
         else:
-            self.criterion = torch.nn.CrossEntropyLoss()
+            self.criterion = get_loss(config.loss_type)
         
         if config.parallel_type == 'Horovod':
             self.optimizer = get_optimizer(self.model, config.optimizer_type, config.optimizer_params[config.optimizer_type])

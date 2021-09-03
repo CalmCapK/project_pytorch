@@ -35,6 +35,7 @@ def cal_binary_metric(target, output):
     #output = torch.from_numpy(np.random.rand(4,2))
     #output = F.softmax(output, dim=1)
     #output = [output]
+    print(output[0].shape)
     output = [torch.sigmoid(x).cpu().detach().numpy() for x in output]
     target = [x.cpu().detach().numpy() for x in target]
    
@@ -46,6 +47,9 @@ def cal_binary_metric(target, output):
     #print(output_label)
     #print(target)
     n = target.shape[0]
+    print(output)
+    print(output_label)
+    print(target)
     
     
     #TN: 预测为负，实际为负  FP: 预测为正，实际为负

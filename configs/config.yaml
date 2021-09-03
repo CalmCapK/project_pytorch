@@ -8,13 +8,14 @@ workers: 6
 seed: 111
 
 use_amp: False
-parallel_type: 'Distributed_Apex'  # Single , DataParallel, Distributed, Distributed_Apex, Horovod 
-data_type: 'ffac'
+parallel_type: 'DataParallel'  # Single , DataParallel, Distributed, Distributed_Apex, Horovod 
+data_type: 'testpj2'
 
-model_type: 'resnet50'
+model_type: 'efficientnet-b7'
 optimizer_type: 'SGD'  # SGD、Adam
 schedule_type: 'poly'
 pretrained: True
+loss_type: 'CrossEntropyLoss'
 
 is_load_model: False #train 和 test和 infer需要加载
 from_interruption: False #train 需要设置
@@ -35,7 +36,7 @@ datasets:
         test_list_path: '/home/kezhiying/testpj/txt_3/est_list.txt'
         infer_list_path: './tmp.txt'
 
-    dataset2:
+    testpj2:
         dataset_name: 'testpj'
         categorys: ['real', 'fake']
         #dataset_list_path
@@ -52,6 +53,35 @@ datasets:
         valid_list_path: '/home/kezhiying/df_datasets_list/ffac/val_image_list.txt'
         test_list_path: '/home/kezhiying/testpj/txt_2/test_list.txt'
         infer_list_path: './tmp.txt'
+
+    ffac_25:
+        ataset_name: 'ffac_25'
+        categorys: ['real', 'fake']
+        #dataset_list_path
+        train_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_25/new_0.txt'
+        valid_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_25/val_image_list.txt'
+        test_list_path: ''
+        infer_list_path: ''
+
+save1:
+    result_path: './results'
+    save_model_path: './results/models'
+    train_checkpoint_file: './results/train_checkpoint.csv'
+    valid_checkpoint_file: './results/valid_checkpoint.csv'
+    test_checkpoint_file: './results/test_checkpoint.csv'
+    test_ans_file: './results/test_ans.csv'
+    infer_ans_file: './results/infer_ans.csv'
+    log_path: './results/log'
+
+save2:
+    result_path: './results2'
+    save_model_path: './results2/models'
+    train_checkpoint_file: './results2/train_checkpoint.csv'
+    valid_checkpoint_file: './results2/valid_checkpoint.csv'
+    test_checkpoint_file: './results2/test_checkpoint.csv'
+    test_ans_file: './results2/test_ans.csv'
+    infer_ans_file: './results2/infer_ans.csv'
+    log_path: './results2/log'
 
 save:
     result_path: './results'
@@ -70,11 +100,21 @@ model_params:
     resnet50:
         image_size: 224
         num_classes : 2
-        num_epochs: 50
-        batch_size : 18 #64
+        num_epochs: 15
+        batch_size : 8 #64
+
+    efficientnet-b7:
+        image_size: 224
+        num_classes : 2
+        num_epochs: 15
+        batch_size : 8 #64
 
 optimizer_params:
     SGD:
+        lr: 0.005 #0.01
+        momentum: 0.9
+        weight_decay: 1e-4
+    SGD2:
         lr: 0.1 #0.01
         momentum: 0.9
         weight_decay: 1e-4
@@ -83,6 +123,8 @@ optimizer_params:
 
 schedule_params:
     poly:
+
+
       
 
 

@@ -1,7 +1,8 @@
-#!/usr/bin/env python
-# -*- coding:utf-8 -*-
+import json
+import numpy as np
 import os
 from shutil import copyfile
+
 
 def rewrite_dataset(old_list, new_list):
     lines = [x for x in map(str.strip, open(old_list).readlines())]
@@ -32,8 +33,6 @@ def rewrite_dataset(old_list, new_list):
         print("no: ", cnt_no)
         print("new: ", cnt_new)
 
-
-
 def check_dataset_exist(list_path):
     lines = map(str.strip, open(list_path).readlines())
     ok = 0
@@ -41,22 +40,32 @@ def check_dataset_exist(list_path):
     json_ok = 0
     json_npy_ok = 0
     npy_ok = 0
+    cnt  = 0
     for line in lines:
+        print(cnt)
+        cnt+=1
         sample_path, label, _, _ = line.split()
         fname = os.path.basename(sample_path)
         pre = os.path.dirname(sample_path)
         if os.path.exists(sample_path):
             ok += 1
             #if not os.path.exists('/home/kezhiying/ffac_data'+pre):
-            #    os.makedirs('/home/kezhiying/ffac_data'+pre)
+            #   os.makedirs('/home/kezhiying/ffac_data'+pre)
             #copyfile(sample_path, '/home/kezhiying/ffac_data'+sample_path)
             if os.path.exists(sample_path[:-4]+'.json'):
                 json_ok += 10
-                #copyfile(sample_path, '/home/kezhiying/ffac_data'+sample_path[:-4]+'.json')
+                #with open(sample_path[:-4]+'.json',  "r") as f:
+                #    a = json.load(f)
+                #print(a)
+                #os.remove('/home/kezhiying'+sample_path[:-4]+'.json')
+                #copyfile('/home/kezhiying/ffac_data2'+sample_path[:-4]+'.json', '/home/kezhiying'+sample_path[:-4]+'.json')
                 if os.path.exists(sample_path[:-4]+'_68.npy'):
                     json_npy_ok += 1
             if os.path.exists(sample_path[:-4]+'_68.npy'):
                 npy_ok += 1
+                #a = np.load(sample_path[:-4]+'_68.npy')
+                #print(a)
+                #os.remove('/home/kezhiying'+sample_path[:-4]+'_68.npy')
                 #copyfile(sample_path, '/home/kezhiying/ffac_data'+sample_path[:-4]+'_68.npy')
         else:
             no += 1
@@ -69,19 +78,5 @@ def check_dataset_exist(list_path):
 
 
 if __name__ == '__main__':
-    #list_path = '/home/kezhiying/df_project/muti_dataset/ffac_train/annotations/ffac_train.txt'
-    #list_path = '/home/kezhiying/df_project/df_datasets_list/ffac_25/new_0.txt'
-    #check_dataset_exist(list_path)
-    
-    #old_list = '/home/kezhiying/df_project/df_datasets_list/ffac_13/ffac_train_10fold/new_0.txt'
-    #new_list = '/home/kezhiying/df_project/df_datasets_list/ffac_25/new_0.txt'
-    #rewrite_dataset(old_list, new_list)
-    #old_list = '/home/kezhiying/df_project/df_datasets_list/ffac_13/val_image_list.txt'
-    #new_list = '/home/kezhiying/df_project/df_datasets_list/ffac_25/val_image_list.txt'
-    #rewrite_dataset(old_list, new_list)
-    import json
-    path = '/home/kezhiying/data/sunzhihao/dataset/forgery_face_extract_retina/Training/image/train_release/18/aa7bea824ae90ec73ab2501c06d070c8/frame00014.json'
-    #with open(path,  "r") as f:
-    with open(path,  "r", encoding="ISO-8859-1") as f:
-        a = json.loads(f)
-    print(a)
+    list_path = '/home/kezhiying/df_project/df_datasets_list/ffac_25/val_image_list.txt'
+    check_dataset_exist(list_path)
