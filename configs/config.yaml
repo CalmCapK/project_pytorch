@@ -9,9 +9,9 @@ seed: 111
 
 use_amp: True
 parallel_type: 'DataParallel'  # Single , DataParallel, Distributed, Distributed_Apex, Horovod 
-data_type: 'ffac_25'
+data_type: 'ffac_24'
 
-model_type: 'efficientnet-b7'
+model_type: 'resnet50'
 optimizer_type: 'SGD'  # SGD、Adam
 schedule_type: 'poly'
 pretrained: True
@@ -54,8 +54,17 @@ datasets:
         test_list_path: '/home/kezhiying/testpj/txt_2/test_list.txt'
         infer_list_path: './tmp.txt'
 
+    ffac_24:
+        dataset_name: 'ffac_24'
+        categorys: ['real', 'fake']
+        #dataset_list_path
+        train_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/new_0.txt'
+        valid_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/val_image_list.txt'
+        test_list_path: ''
+        infer_list_path: ''
+
     ffac_25:
-        ataset_name: 'ffac_25'
+        dataset_name: 'ffac_25'
         categorys: ['real', 'fake']
         #dataset_list_path
         train_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_25/new_0.txt'
@@ -63,7 +72,7 @@ datasets:
         test_list_path: ''
         infer_list_path: ''
 
-save:
+save_eb7:
     result_path: './results_eb7'
     save_model_path: './results_eb7/models'
     train_checkpoint_file: './results_eb7/train_checkpoint.csv'
@@ -73,15 +82,15 @@ save:
     infer_ans_file: './results_eb7/infer_ans.csv'
     log_path: './results_eb7/log'
 
-save2:
-    result_path: './results2'
-    save_model_path: './results2/models'
-    train_checkpoint_file: './results2/train_checkpoint.csv'
-    valid_checkpoint_file: './results2/valid_checkpoint.csv'
-    test_checkpoint_file: './results2/test_checkpoint.csv'
-    test_ans_file: './results2/test_ans.csv'
-    infer_ans_file: './results2/infer_ans.csv'
-    log_path: './results2/log'
+save:
+    result_path: './results_rs50'
+    save_model_path: './results_rs50/models'
+    train_checkpoint_file: './results_rs50/train_checkpoint.csv'
+    valid_checkpoint_file: './results_rs50/valid_checkpoint.csv'
+    test_checkpoint_file: './results_rs50/test_checkpoint.csv'
+    test_ans_file: './results_rs50/test_ans.csv'
+    infer_ans_file: './results_rs50/infer_ans.csv'
+    log_path: './results_rs50/log'
 
 load:
     load_model_path: './results/models/resnet50_epoch_0_best.pth'

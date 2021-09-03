@@ -54,8 +54,8 @@ def check_dataset_exist(list_path):
             #copyfile(sample_path, '/home/kezhiying/ffac_data'+sample_path)
             if os.path.exists(sample_path[:-4]+'.json'):
                 json_ok += 10
-                #with open(sample_path[:-4]+'.json',  "r") as f:
-                #    a = json.load(f)
+                with open(sample_path[:-4]+'.json',  "r") as f:
+                    a = json.load(f)
                 #print(a)
                 #os.remove('/home/kezhiying'+sample_path[:-4]+'.json')
                 #copyfile('/home/kezhiying/ffac_data2'+sample_path[:-4]+'.json', '/home/kezhiying'+sample_path[:-4]+'.json')
@@ -63,7 +63,7 @@ def check_dataset_exist(list_path):
                     json_npy_ok += 1
             if os.path.exists(sample_path[:-4]+'_68.npy'):
                 npy_ok += 1
-                #a = np.load(sample_path[:-4]+'_68.npy')
+                a = np.load(sample_path[:-4]+'_68.npy')
                 #print(a)
                 #os.remove('/home/kezhiying'+sample_path[:-4]+'_68.npy')
                 #copyfile(sample_path, '/home/kezhiying/ffac_data'+sample_path[:-4]+'_68.npy')
@@ -78,5 +78,5 @@ def check_dataset_exist(list_path):
 
 
 if __name__ == '__main__':
-    list_path = '/home/kezhiying/df_project/df_datasets_list/ffac_25/val_image_list.txt'
+    list_path = '/home/kezhiying/df_project/df_datasets_list/ffac_24/new_0.txt'
     check_dataset_exist(list_path)
