@@ -70,8 +70,8 @@ def read_data(path):
         if len(line.split()) == 1:
             data.append(line)
         else:
-            sample_path, label = line.split()
-            #sample_path, label, _, _ = line.split()
+            #sample_path, label = line.split()
+            sample_path, label, _, _ = line.split()
             label = int(label)
             data.append((sample_path, label))
     return data

@@ -11,7 +11,6 @@ def build_model(model_type, model_params, pretrained=False):
             # self.model = models.resnet50(num_classes=self.num_classes)
             model = models.__dict__[model_type](pretrained=True)
             model.fc = nn.Linear(2048, model_params['num_classes'])
-            print(model)
         else:
             print("=> creating model: {}".format(model_type))
             model = models.__dict__[model_type](num_classes=model_params['num_classes'])

@@ -7,9 +7,9 @@ world_size: 2
 workers: 6
 seed: 111
 
-use_amp: False
+use_amp: True
 parallel_type: 'DataParallel'  # Single , DataParallel, Distributed, Distributed_Apex, Horovod 
-data_type: 'testpj2'
+data_type: 'ffac_25'
 
 model_type: 'efficientnet-b7'
 optimizer_type: 'SGD'  # SGD、Adam
@@ -63,15 +63,15 @@ datasets:
         test_list_path: ''
         infer_list_path: ''
 
-save1:
-    result_path: './results'
-    save_model_path: './results/models'
-    train_checkpoint_file: './results/train_checkpoint.csv'
-    valid_checkpoint_file: './results/valid_checkpoint.csv'
-    test_checkpoint_file: './results/test_checkpoint.csv'
-    test_ans_file: './results/test_ans.csv'
-    infer_ans_file: './results/infer_ans.csv'
-    log_path: './results/log'
+save:
+    result_path: './results_eb7'
+    save_model_path: './results_eb7/models'
+    train_checkpoint_file: './results_eb7/train_checkpoint.csv'
+    valid_checkpoint_file: './results_eb7/valid_checkpoint.csv'
+    test_checkpoint_file: './results_eb7/test_checkpoint.csv'
+    test_ans_file: './results_eb7/test_ans.csv'
+    infer_ans_file: './results_eb7/infer_ans.csv'
+    log_path: './results_eb7/log'
 
 save2:
     result_path: './results2'
@@ -83,16 +83,6 @@ save2:
     infer_ans_file: './results2/infer_ans.csv'
     log_path: './results2/log'
 
-save:
-    result_path: './results'
-    save_model_path: './results/models'
-    train_checkpoint_file: './results/train_checkpoint.csv'
-    valid_checkpoint_file: './results/valid_checkpoint.csv'
-    test_checkpoint_file: './results/test_checkpoint.csv'
-    test_ans_file: './results/test_ans.csv'
-    infer_ans_file: './results/infer_ans.csv'
-    log_path: './results/log'
-
 load:
     load_model_path: './results/models/resnet50_epoch_0_best.pth'
 
@@ -101,13 +91,13 @@ model_params:
         image_size: 224
         num_classes : 2
         num_epochs: 15
-        batch_size : 8 #64
+        batch_size : 18 #64
 
     efficientnet-b7:
         image_size: 224
         num_classes : 2
         num_epochs: 15
-        batch_size : 8 #64
+        batch_size : 18 #64
 
 optimizer_params:
     SGD:
