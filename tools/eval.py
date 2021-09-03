@@ -1,10 +1,27 @@
 import numpy as np
+import pylab as plt
+import sklearn.metrics as skm
 from sklearn.metrics import roc_auc_score, average_precision_score, confusion_matrix
 from sklearn.metrics import classification_report, precision_recall_curve, accuracy_score
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_curve
 import torch
 import torch.nn.functional as F
 
+
+
+def sava_auc(fpr, tpr, path):
+    roc_auc = skm.auc(fpr, tpr)
+    plt.figure(figsize=(6,6))
+    plt.title('ROC')
+    plt.plot(fpr, tpr, 'b', label = 'AUC = %0.3f' % roc_auc)
+    plt.legend(loc = 'lower right')
+    plt.plot([0, 1], [0, 1],'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.savefig(path)
+    plt.close()
 
 # output: batch_size x 3
 # target: batch_size
@@ -35,21 +52,15 @@ def cal_binary_metric(target, output):
     #output = torch.from_numpy(np.random.rand(4,2))
     #output = F.softmax(output, dim=1)
     #output = [output]
-    print(output[0].shape)
     output = [torch.sigmoid(x).cpu().detach().numpy() for x in output]
     target = [x.cpu().detach().numpy() for x in target]
    
     output = np.concatenate((output),axis=0)
     target = np.concatenate((target),axis=0)
     output_label = np.argmax(output, axis=1)
-    output = np.max(output, axis=1)
-    #print(output)
-    #print(output_label)
-    #print(target)
+    output = output[:,1]
+  
     n = target.shape[0]
-    print(output)
-    print(output_label)
-    print(target)
     
     
     #TN: 预测为负，实际为负  FP: 预测为正，实际为负
@@ -76,7 +87,8 @@ def cal_binary_metric(target, output):
     
     #AUC，对应TPR-FPR曲线
     auc = roc_auc_score(target, output)
-    #fpr, tpr, thresholds = roc_curve(target, output)
+    #fpr_, tpr_, thresholds = roc_curve(target, output)
+    #sava_auc(fpr_, tpr_, 'test.jpg')
     #print(roc_curve(target, output))
 
     #print(tn, fp, fn, tp)
@@ -110,7 +122,6 @@ def cal_multiclass_metric(target, output):
     output = np.concatenate((output),axis=0) #list -> numpy
     target = np.concatenate((target),axis=0)
     output_label = np.argmax(output, axis=1)
-    output = np.max(output, axis=1)
     #print(target)
     #print(output_label)
     #print(target.shape[0])
