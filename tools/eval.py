@@ -46,6 +46,7 @@ def accuracy(target, output, topk=(1, )):
 
 #label: [(batchsize x n)]x(total/batchsize) 
 #pred: [(batchsize x n) x 3]x(total/batchsize) 
+@profile
 def cal_binary_metric(target, output):
     #target = torch.from_numpy(np.array([0, 0, 1, 1]))
     #target = [target]

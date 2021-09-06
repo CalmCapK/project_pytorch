@@ -76,6 +76,7 @@ def read_data(path):
             data.append((sample_path, label))
     return data
 
+@profile
 def record_epoch(mode, epoch, total_epoch, record, record_path):
     print('\n[%s] Epoch [%d/%d]' %
           (mode, epoch, total_epoch), end='')

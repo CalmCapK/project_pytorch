@@ -5,10 +5,10 @@ from tqdm import tqdm
 from tools.custom import AverageMeter
 from tools.eval import accuracy, cal_multiclass_metric, cal_binary_metric
 from tools.utils import reduce_mean, reduce_mean_hvd, all_gather_tensor, all_gather_tensor_hvd
+from networks.losses import cal_balance_loss
 
-
-
-def train_epoch(model, data_loader, device, criterion, optimizer, parallel_type, nprocs, scaler, use_amp):
+@profile
+def train_epoch(current_epoch, model, data_loader, device, criterion, optimizer, scheduler, schedule_params, parallel_type, nprocs, scaler, use_amp, summary_writer):
     model.train(True)
     labels = []
     infos = []
@@ -16,7 +16,8 @@ def train_epoch(model, data_loader, device, criterion, optimizer, parallel_type,
     with torch.enable_grad():
         epoch_loss = AverageMeter('loss', ':.4e')
         epoch_acc = AverageMeter('acc', ':.3f')
-        for image, label, info in tqdm(data_loader, ncols=80):
+        total_step = len(data_loader)
+        for i, (image, label, info) in enumerate(tqdm(data_loader, ncols=80)):
             #len(data_loader.dataset): dataset size
             #image: batchsize x n x 3 x 244 x 244
             #label: batchsize x n
@@ -30,9 +31,11 @@ def train_epoch(model, data_loader, device, criterion, optimizer, parallel_type,
                 with autocast(): 
                     out = model(image)
                     loss = criterion(out, label)
+                    #loss = cal_balance_loss(criterion, out, label)
             else: 
                 out = model(image)
                 loss = criterion(out, label)
+                #loss = cal_balance_loss(criterion, out, label)
 
             preds.append(out)
             infos.append(infos)
@@ -81,6 +84,18 @@ def train_epoch(model, data_loader, device, criterion, optimizer, parallel_type,
                 scaler.update()
             else:
                 optimizer.step()
+
+            if scheduler is not None:
+                print("----------------")
+                if schedule_params['mode'] == 'step':
+                    schedule_params['params']['max_iter'] = total_step
+                    scheduler.step(i + current_epoch * schedule_params['params']['max_iter'])
+                    if i == schedule_params['params']['max_iter'] - 1:
+                        print("i: ", i)
+                        break
+                summary_writer.add_scalar('train_step/lr_scheduler', float(scheduler.get_lr()[-1]), i + current_epoch * total_step)
+                summary_writer.add_scalar('train_step/lr_optimizer', optimizer.param_groups[0]['lr'], i + current_epoch * total_step)
+                
             
 
         #梯度  ？
@@ -100,9 +115,11 @@ def train_epoch(model, data_loader, device, criterion, optimizer, parallel_type,
             #total_metric = cal_multiclass_metric(labels_list, preds_list)
         else:
             total_metric = cal_binary_metric(labels, preds)
+            #total_metric = {'auc':1, 'acc':2}
             #total_metric = cal_multiclass_metric(labels, preds)
         # cal average metric 两个进程取平均值
         average_metric = cal_binary_metric(labels, preds)
+        #average_metric = {'auc':1, 'acc':2}
         #average_metric = cal_multiclass_metric(labels, preds)
         if parallel_type == 'Distributed' or parallel_type == 'Distributed_Apex':
             torch.distributed.barrier()

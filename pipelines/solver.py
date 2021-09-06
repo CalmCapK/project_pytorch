@@ -14,17 +14,18 @@ import torch.nn.functional as F
 from dataset.data_loader import get_loader, get_infer_image
 from networks.losses import get_loss
 from networks.networks import build_model
-from networks.opt import adjust_learning_rate, get_optimizer
+from networks.opt import adjust_learning_rate, get_optimizer, get_schedule
 from pipelines.train import train_epoch
 from pipelines.test import test_epoch, test_without_label
 from tools.utils import init_seed, record_epoch, load_model, save_model, write_result_csv
 
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" # 按照PCI_BUS_ID顺序从0开始排列GPU设备
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "4,5"
 
-
+#@profile
 class Solver(object):
+    @profile
     def __init__(self, config):
         # seed
         if config.seed is not None:
@@ -91,7 +92,14 @@ class Solver(object):
             self.optimizer = get_optimizer(self.model, config.optimizer_type, config.optimizer_params[config.optimizer_type])
             # ???
             # self.optimizer = torch.nn.DataParallel(self.optimizer, device_ids=config.gpu)
-      
+        if config.schedule_type == 'no':
+            self.schedule_params = None
+            self.scheduler = None
+        else:
+            self.schedule_params = config.schedule_params[config.schedule_type]
+            self.scheduler = get_schedule(self.optimizer, config.schedule_type, self.schedule_params)
+
+
         if config.use_amp:
             self.scalar = GradScaler()
         else:
@@ -160,7 +168,7 @@ class Solver(object):
                                      dataset_params=dataset_params,
                                      parallel_type=config.parallel_type)
         return train_loader, valid_loader, test_loader
-
+    @profile
     def train_and_valid(self, config):
         total_time = 0.0
         total_epoch = 0
@@ -170,14 +178,14 @@ class Solver(object):
             epoch_start_time = time.time()
             
             # ---lr
-            adjust_learning_rate(self.optimizer, epoch, config.optimizer_params[config.optimizer_type]['lr'])
+            #adjust_learning_rate(self.optimizer, epoch, config.optimizer_params[config.optimizer_type]['lr'])
 
             # ---train
             if config.parallel_type == 'Distributed' or config.parallel_type == 'Distributed_Apex' or config.parallel_type == 'Horovod':
                 # 通过维持各个进程之间的相同随机数种子使不同进程能获得同样的shuffle效果
                 self.train_loader.sampler.set_epoch(epoch)
             train_record, _, train_total_metric, train_average_metric = train_epoch(
-                self.model, self.train_loader, self.device, self.criterion, self.optimizer, config.parallel_type, self.nprocs, self.scalar, config.use_amp)
+                epoch, self.model, self.train_loader, self.device, self.criterion, self.optimizer, self.scheduler, self.schedule_params, config.parallel_type, self.nprocs, self.scalar, config.use_amp, self.summary_writer)
             if config.local_rank == 0:
                 for k, v in train_record.items():
                     self.summary_writer.add_scalar('train/'+k, v, epoch)
@@ -195,7 +203,7 @@ class Solver(object):
 
             # ---valid
             valid_record, _, valid_total_metric, valid_average_metric = test_epoch(
-                self.model, self.valid_loader, self.device, self.criterion, config.parallel_type, self.nprocs)
+                epoch, self.model, self.valid_loader, self.device, self.criterion, config.parallel_type, self.nprocs)
             if config.local_rank == 0:
                 for k, v in valid_record.items():
                     self.summary_writer.add_scalar('valid/'+k, v, epoch)
@@ -242,7 +250,7 @@ class Solver(object):
 
     def test(self, config):
         test_record, test_result = test_epoch(
-            self.model, self.test_loader, self.device, self.criterion, config.parallel_type, self.nprocs)
+            0, self.model, self.test_loader, self.device, self.criterion, config.parallel_type, self.nprocs)
         if config.local_rank == 0:
             record_epoch(mode='test', epoch=1, total_epoch=1,
                      record=test_record, record_path=config.save['test_checkpoint_file'])
@@ -290,7 +298,7 @@ class Solver(object):
                                       model_params=model_params,
                                       dataset_params=dataset_params)
             infer_result = test_without_label(
-                self.model, infer_loader, self.device, self.criterion)
+                0, self.model, infer_loader, self.device, self.criterion)
             #pred: [(batchsize x n) x 3]x(total/batchsize) 
             #info: [(..., len(batchsize x n)]x(total/batchsize)
             datas = []

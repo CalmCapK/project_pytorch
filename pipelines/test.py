@@ -5,7 +5,9 @@ from tools.custom import AverageMeter
 from tools.eval import accuracy, cal_multiclass_metric, cal_binary_metric
 from tools.utils import reduce_mean, reduce_mean_hvd, all_gather_tensor, all_gather_tensor_hvd
 
-def test_epoch(model, data_loader, device, criterion, parallel_type, nprocs):
+
+@profile
+def test_epoch(current_epoch, model, data_loader, device, criterion, parallel_type, nprocs):
     model.train(False)
     model.eval()
 
@@ -70,10 +72,12 @@ def test_epoch(model, data_loader, device, criterion, parallel_type, nprocs):
             total_metric = cal_binary_metric(labels_list, preds_list)
             #total_metric = cal_multiclass_metric(labels_list, preds_list)
         else:
+            #total_metric = {'auc':1,'bcc':2}
             total_metric = cal_binary_metric(labels, preds)
             #total_metric = cal_multiclass_metric(labels, preds)
         # cal average metric 两个进程取平均值
         average_metric = cal_binary_metric(labels, preds)
+        #average_metric = {'auc':1,'bcc':2}
         #average_metric = cal_multiclass_metric(labels, preds)
         if parallel_type == 'Distributed' or parallel_type == 'Distributed_Apex':
             torch.distributed.barrier()
@@ -102,7 +106,7 @@ def test_epoch(model, data_loader, device, criterion, parallel_type, nprocs):
         return results, (preds, labels, infos), total_metric, average_metric
 
 
-def test_without_label(model, data_loader, device, criterion):
+def test_without_label(current_epoch, model, data_loader, device, criterion):
     model.train(False)
     model.eval()
 

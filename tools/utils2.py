@@ -19,7 +19,7 @@ def rewrite_dataset(old_list, new_list):
             #          fsize += get_FileSize(sample_path)  
             fname = '.'.join(os.path.basename(sample_path).split('.')[:-1])
             pre = os.path.dirname(sample_path)
-            new_pre = '/home/kezhiying'
+            new_pre = '/data/kzy'
             if os.path.exists(sample_path):
                 cnt_ok += 1
             else:
@@ -54,8 +54,8 @@ def check_dataset_exist(list_path):
             #copyfile(sample_path, '/home/kezhiying/ffac_data'+sample_path)
             if os.path.exists(sample_path[:-4]+'.json'):
                 json_ok += 10
-                with open(sample_path[:-4]+'.json',  "r") as f:
-                    a = json.load(f)
+                #with open(sample_path[:-4]+'.json',  "r") as f:
+                #    a = json.load(f)
                 #print(a)
                 #os.remove('/home/kezhiying'+sample_path[:-4]+'.json')
                 #copyfile('/home/kezhiying/ffac_data2'+sample_path[:-4]+'.json', '/home/kezhiying'+sample_path[:-4]+'.json')
@@ -63,7 +63,7 @@ def check_dataset_exist(list_path):
                     json_npy_ok += 1
             if os.path.exists(sample_path[:-4]+'_68.npy'):
                 npy_ok += 1
-                a = np.load(sample_path[:-4]+'_68.npy')
+                #a = np.load(sample_path[:-4]+'_68.npy')
                 #print(a)
                 #os.remove('/home/kezhiying'+sample_path[:-4]+'_68.npy')
                 #copyfile(sample_path, '/home/kezhiying/ffac_data'+sample_path[:-4]+'_68.npy')
@@ -78,5 +78,11 @@ def check_dataset_exist(list_path):
 
 
 if __name__ == '__main__':
-    list_path = '/home/kezhiying/df_project/df_datasets_list/ffac_24/new_0.txt'
-    check_dataset_exist(list_path)
+    #list_path = '/home/kezhiying/df_project/df_datasets_list/ffac_24/new_0.txt'
+    #check_dataset_exist(list_path)
+    #old_list = '/home/kezhiying/df_project/df_datasets_list/ffac_13/ffac_train_10fold/new_0.txt'
+    #new_list = '/home/kezhiying/df_project/df_datasets_list/ffac_7/new_0.txt'
+    #old_list = '/home/kezhiying/df_project/df_datasets_list/ffac_13/val_image_list.txt'
+    #new_list = '/home/kezhiying/df_project/df_datasets_list/ffac_7/val_image_list.txt'
+    check_dataset_exist(new_list)
+    #rewrite_dataset(old_list, new_list)

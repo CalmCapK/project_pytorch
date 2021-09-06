@@ -5,6 +5,7 @@ import yaml
 
 from pipelines.solver import Solver
 
+@profile
 def main(local_rank, config):
     print("local_rank:", local_rank)
     config.local_rank = local_rank

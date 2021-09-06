@@ -1,3 +1,4 @@
+import cv2
 import horovod.torch as hvd
 from PIL import Image, ImageFile
 from random import shuffle
@@ -5,7 +6,8 @@ import torch
 from torch.nn import parameter
 from torch.utils import data
 from torchvision import transforms as T
-
+from dataset.transforms import create_train_transforms, create_val_transforms
+from albumentations.pytorch.functional import img_to_tensor
 from tools import utils
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -79,32 +81,46 @@ class ImageFolder(data.Dataset):
 
 
     def load_sample(self, img_path):
-        image = Image.open(img_path)
-        image_channels = len(image.split())
-        if image_channels != 3:
-            image = Image.open(img_path).convert("RGB")
+        #image = Image.open(img_path)
+        #image_channels = len(image.split())
+        #if image_channels != 3:
+        #    image = Image.open(img_path).convert("RGB")
 
-        Transform = []
+        image = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #print("image1:", image.shape)
         if self.mode == 'train':
-            Transform.append(T.Resize((256, 256)))
-            Transform.append(T.RandomResizedCrop(224))
-            Transform.append(T.RandomHorizontalFlip())
+            transforms = create_train_transforms(size=380)
         elif self.mode == 'test' or self.mode == 'valid' or self.mode == 'infer':
-            Transform.append(T.Resize((256, 256)))
-            Transform.append(T.CenterCrop(224))
+            transforms = create_val_transforms(size=380)
+        image = transforms(image=image)["image"]
+        normalize = {
+            "mean": [0.485, 0.456, 0.406],
+            "std": [0.229, 0.224, 0.225]
+        }
+        image = img_to_tensor(image, normalize)
+        #Transform = []
+        #if self.mode == 'train':
+        #    Transform.append(T.Resize((256, 256)))
+        #    Transform.append(T.RandomResizedCrop(224))
+        #    Transform.append(T.RandomHorizontalFlip())
+        #elif self.mode == 'test' or self.mode == 'valid' or self.mode == 'infer':
+        #    Transform.append(T.Resize((256, 256)))
+        #    Transform.append(T.CenterCrop(224))
 
-        Transform.append(T.ToTensor())
-        Transform = T.Compose(Transform)
-        image = Transform(image)
-        Norm_ = T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        image = Norm_(image)
-
+        #Transform.append(T.ToTensor())
+        #Transform = T.Compose(Transform)
+        #image = Transform(image)
+        
+        #Norm_ = T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+        #image = Norm_(image)
+        #print("image2:", image.shape)
         return image
 
     def __len__(self):
         return self.data_num
 
-
+@profile
 def get_loader(data_list_path, batch_size, shuffle=True, num_workers=1,
                mode='train', balance=False, model_params=None, dataset_params=None, parallel_type=''):
     """Builds and returns Dataloader."""
