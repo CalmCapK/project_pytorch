@@ -25,7 +25,7 @@ def isotropically_resize_image(img, size, interpolation_down=cv2.INTER_AREA, int
     resized = cv2.resize(img, (int(w), int(h)), interpolation=interpolation)
     return resized
 
-
+#各向性调整大小
 class IsotropicResize(DualTransform):
     def __init__(self, max_side, interpolation_down=cv2.INTER_AREA, interpolation_up=cv2.INTER_CUBIC,
                  always_apply=False, p=1):
@@ -137,3 +137,25 @@ def direct_val(imgs,size):
     imgs = torch.cat(imgs)
 
     return imgs
+
+
+if __name__ == '__main__':
+    import cv2
+    from albumentations.pytorch.functional import img_to_tensor
+    img_path = '/home/kezhiying/data/sunzhihao/dataset/forgery_face_extract_retina/Training/image/train_release/18/aa7bea824ae90ec73ab2501c06d070c8/frame00014.png'
+    #img_path = '/home/kezhiying/data/sunzhihao/dataset/forgery_face_extract_retina/Validation/image/val_perturb_release/17/b7e4952e634f722220aabec3b4212bd8/frame00036.png'
+    image = cv2.imread(img_path, cv2.IMREAD_COLOR)
+    import matplotlib.pyplot as plt
+    plt.imshow(image)
+    cv2.imwrite("./img1.png", image)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    cv2.imwrite("./img2.png", image) 
+    #transforms = create_train_transforms(size=380)
+    transforms = create_val_transforms(size=380)
+    image = transforms(image=image)["image"]
+    normalize = {
+        "mean": [0.485, 0.456, 0.406],
+        "std": [0.229, 0.224, 0.225]
+    }
+    cv2.imwrite("./img3.png", image)
+    image = img_to_tensor(image, normalize)
