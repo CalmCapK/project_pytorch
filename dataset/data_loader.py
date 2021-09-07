@@ -79,16 +79,9 @@ class ImageFolder(data.Dataset):
 		#result_image: n x 3 x 244 x 244,  result_label: n,  result_paths: [...] len(n)
         return torch.cat([x.unsqueeze(0) for x in result_images]),  torch.tensor(result_labels), result_paths
 
-
-    def load_sample(self, img_path):
-        #image = Image.open(img_path)
-        #image_channels = len(image.split())
-        #if image_channels != 3:
-        #    image = Image.open(img_path).convert("RGB")
-
+    def transforms2(self, img_path):
         image = cv2.imread(img_path, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        #print("image1:", image.shape)
         if self.mode == 'train':
             transforms = create_train_transforms(size=380)
         elif self.mode == 'test' or self.mode == 'valid' or self.mode == 'infer':
@@ -99,22 +92,33 @@ class ImageFolder(data.Dataset):
             "std": [0.229, 0.224, 0.225]
         }
         image = img_to_tensor(image, normalize)
-        #Transform = []
-        #if self.mode == 'train':
-        #    Transform.append(T.Resize((256, 256)))
-        #    Transform.append(T.RandomResizedCrop(224))
-        #    Transform.append(T.RandomHorizontalFlip())
-        #elif self.mode == 'test' or self.mode == 'valid' or self.mode == 'infer':
-        #    Transform.append(T.Resize((256, 256)))
-        #    Transform.append(T.CenterCrop(224))
+        return image
+    
+    def transforms1(self, img_path):
+        image = Image.open(img_path)
+        image_channels = len(image.split())
+        if image_channels != 3:
+            image = Image.open(img_path).convert("RGB")
+        Transform = []
+        if self.mode == 'train':
+            Transform.append(T.Resize((256, 256)))
+            Transform.append(T.RandomResizedCrop(224))
+            Transform.append(T.RandomHorizontalFlip())
+        elif self.mode == 'test' or self.mode == 'valid' or self.mode == 'infer':
+            Transform.append(T.Resize((256, 256)))
+            Transform.append(T.CenterCrop(224))
 
-        #Transform.append(T.ToTensor())
-        #Transform = T.Compose(Transform)
-        #image = Transform(image)
+        Transform.append(T.ToTensor())
+        Transform = T.Compose(Transform)
+        image = Transform(image)
         
-        #Norm_ = T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        #image = Norm_(image)
-        #print("image2:", image.shape)
+        Norm_ = T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+        image = Norm_(image)
+        return image
+
+    def load_sample(self, img_path):
+        #image = self.transforms1(img_path)     
+        image = self.transforms2(img_path)
         return image
 
     def __len__(self):

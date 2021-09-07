@@ -30,12 +30,12 @@ def train_epoch(current_epoch, model, data_loader, device, criterion, optimizer,
             if use_amp:# 前向过程(model + loss)开启 autocast
                 with autocast(): 
                     out = model(image)
-                    loss = criterion(out, label)
-                    #loss = cal_balance_loss(criterion, out, label)
+                    #loss = criterion(out, label)
+                    loss = cal_balance_loss(criterion, out, label)
             else: 
                 out = model(image)
-                loss = criterion(out, label)
-                #loss = cal_balance_loss(criterion, out, label)
+                #loss = criterion(out, label)
+                loss = cal_balance_loss(criterion, out, label)
 
             preds.append(out)
             infos.append(infos)
@@ -86,18 +86,24 @@ def train_epoch(current_epoch, model, data_loader, device, criterion, optimizer,
                 optimizer.step()
 
             if scheduler is not None:
-                print("----------------")
                 if schedule_params['mode'] == 'step':
-                    schedule_params['params']['max_iter'] = total_step
-                    scheduler.step(i + current_epoch * schedule_params['params']['max_iter'])
-                    if i == schedule_params['params']['max_iter'] - 1:
-                        print("i: ", i)
-                        break
+                    if schedule_params['type'] == 'poly':
+                        schedule_params['params']['max_iter'] = total_step
+                        scheduler.step(i + current_epoch * schedule_params['params']['max_iter'])
+                        #if i == schedule_params['params']['max_iter'] - 1:
+                        #    print("i: ", i)
+                        #    break
+                    elif schedule_params['type'] == 'cosineAnnWarm':
+                        scheduler.step(current_epoch + i / total_step)
                 summary_writer.add_scalar('train_step/lr_scheduler', float(scheduler.get_lr()[-1]), i + current_epoch * total_step)
                 summary_writer.add_scalar('train_step/lr_optimizer', optimizer.param_groups[0]['lr'], i + current_epoch * total_step)
                 
-            
-
+        if scheduler is not None:  
+            if schedule_params['mode'] == 'epoch':
+                if schedule_params['type'] == 'poly':
+                    scheduler.step()
+                elif schedule_params['type'] == 'cosineAnnWarm':
+                    scheduler.step()
         #梯度  ？
         #Loss   各自
         #Epoch_loss 平均

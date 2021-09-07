@@ -9,12 +9,12 @@ seed: 111
 
 use_amp: True
 parallel_type: 'DataParallel'  # Single , DataParallel, Distributed, Distributed_Apex, Horovod 
-data_type: 'ffac_7_2' 
+data_type: 'ffac_24' 
 #data_type: 'testpj2' 
 
 model_type: 'resnet50'  #efficientnet-b7, resnet50
 optimizer_type: 'SGD'  # SGD、Adam
-schedule_type: 'no' #'no', 'poly'
+schedule_type: 'cosineAnnWarm' #'no', 'poly', 'cosineAnnWarm'
 pretrained: True
 loss_type: 'CrossEntropyLoss'
 
@@ -91,75 +91,31 @@ datasets:
         test_list_path: ''
         infer_list_path: ''
 
-save_eb7_poly_transform: #save_eb7_poly_transform
-    result_path: './results_eb7_poly_transform'
-    save_model_path: './results_eb7_poly_transform/models'
-    train_checkpoint_file: './results_eb7_poly_transform/train_checkpoint.csv'
-    valid_checkpoint_file: './results_eb7_poly_transform/valid_checkpoint.csv'
-    test_checkpoint_file: './results_eb7_poly_transform/test_checkpoint.csv'
-    test_ans_file: './results_eb7_poly_transform/test_ans.csv'
-    infer_ans_file: './results_eb7_poly_transform/infer_ans.csv'
-    log_path: './results_eb7_poly_transform/log'
 
-save_eb7_poly_noloss_transform: #save_eb7_poly_noloss_transform
-    result_path: './results_eb7_poly_noloss_transform'
-    save_model_path: './results_eb7_poly_noloss_transform/models'
-    train_checkpoint_file: './results_eb7_poly_noloss_transform/train_checkpoint.csv'
-    valid_checkpoint_file: './results_eb7_poly_noloss_transform/valid_checkpoint.csv'
-    test_checkpoint_file: './results_eb7_poly_noloss_transform/test_checkpoint.csv'
-    test_ans_file: './results_eb7_poly_noloss_transform/test_ans.csv'
-    infer_ans_file: './results_eb7_poly_noloss_transform/infer_ans.csv'
-    log_path: './results_eb7_poly_noloss_transform/log'
+save:
+    #result_path: '../results'
+    #result_path: '../results_eb7' #
+    #result_path: '../results_eb7_transform'  #
+    #result_path: '../results_eb7_poly'  #
+    #result_path: '../results_eb7_poly_balanceloss'  #
+    #result_path: '../results_eb7_poly_transform'  #
+    #result_path: '../results_eb7_poly_balanceloss_transform' #top
+    #result_path: '../results_rs50'  #
+    #result_path: '../results_rs50_transform'  #top
+    #result_path: '../results_rs50_poly'  #
+    #result_path: '../results_rs50_poly_balanceloss'  #
+    #result_path: '../results_rs50_poly_transform'   #  
+    #result_path: '../results_rs50_poly_balance_transform'  #
+    #result_path: '../results_rs50_cosineAnnWarm_balanceloss_transform' #
+    result_path: '../results_rs50_cosineAnnWarm_balanceloss_transform_lr01_epoch' #
+    save_model_path: 'models'
+    train_checkpoint_file: 'train_checkpoint.csv'
+    valid_checkpoint_file: 'valid_checkpoint.csv'
+    test_checkpoint_file: 'test_checkpoint.csv'
+    test_ans_file: 'test_ans.csv'
+    infer_ans_file: 'infer_ans.csv'
+    log_path: 'log'
 
-save: #save_rs50_transform
-    result_path: './results_rs50_transform'
-    save_model_path: './results_rs50_transform/models'
-    train_checkpoint_file: './results_rs50_transform/train_checkpoint.csv'
-    valid_checkpoint_file: './results_rs50_transform/valid_checkpoint.csv'
-    test_checkpoint_file: './results_rs50_transform/test_checkpoint.csv'
-    test_ans_file: './results_rs50_transform/test_ans.csv'
-    infer_ans_file: './results_rs50_transform/infer_ans.csv'
-    log_path: './results_rs50_transform/log'
-
-save_bk:
-    result_path: './results'
-    save_model_path: './results/models'
-    train_checkpoint_file: './results/train_checkpoint.csv'
-    valid_checkpoint_file: './results/valid_checkpoint.csv'
-    test_checkpoint_file: './results/test_checkpoint.csv'
-    test_ans_file: './results/test_ans.csv'
-    infer_ans_file: './results/infer_ans.csv'
-    log_path: './results/log'
-
-save_eb7_poly:
-    result_path: './results_eb7_poly'
-    save_model_path: './results_eb7_poly/models'
-    train_checkpoint_file: './results_eb7_poly/train_checkpoint.csv'
-    valid_checkpoint_file: './results_eb7_poly/valid_checkpoint.csv'
-    test_checkpoint_file: './results_eb7_poly/test_checkpoint.csv'
-    test_ans_file: './results_eb7_poly/test_ans.csv'
-    infer_ans_file: './results_eb7_poly/infer_ans.csv'
-    log_path: './results_eb7_poly/log'
-
-save_eb7:
-    result_path: './results_eb7'
-    save_model_path: './results_eb7/models'
-    train_checkpoint_file: './results_eb7/train_checkpoint.csv'
-    valid_checkpoint_file: './results_eb7/valid_checkpoint.csv'
-    test_checkpoint_file: './results_eb7/test_checkpoint.csv'
-    test_ans_file: './results_eb7/test_ans.csv'
-    infer_ans_file: './results_eb7/infer_ans.csv'
-    log_path: './results_eb7/log'
-
-save_rs50:
-    result_path: './results_rs50'
-    save_model_path: './results_rs50/models'
-    train_checkpoint_file: './results_rs50/train_checkpoint.csv'
-    valid_checkpoint_file: './results_rs50/valid_checkpoint.csv'
-    test_checkpoint_file: './results_rs50/test_checkpoint.csv'
-    test_ans_file: './results_rs50/test_ans.csv'
-    infer_ans_file: './results_rs50/infer_ans.csv'
-    log_path: './results_rs50/log'
 
 load:
     load_model_path: './results/models/resnet50_epoch_0_best.pth'
@@ -179,7 +135,7 @@ model_params:
 
 optimizer_params:
     SGD:
-        lr: 0.005 #0.01
+        lr: 0.01 #0.01  #0.005
         momentum: 0.9
         weight_decay: 1e-4
     SGD2:
@@ -194,9 +150,15 @@ schedule_params:
         mode: 'step'
         type: 'poly'
         params:
-            max_iter:  9245
+            max_iter:  10000
             cycle: 1
             power: 0.8
+    cosineAnnWarm:  
+        mode: 'epoch'
+        type: 'cosineAnnWarm'   
+        params:      
+            T_0: 5
+            T_mult: 1
     
 
 

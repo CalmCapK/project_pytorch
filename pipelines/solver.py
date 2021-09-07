@@ -21,7 +21,7 @@ from tools.utils import init_seed, record_epoch, load_model, save_model, write_r
 
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" # 按照PCI_BUS_ID顺序从0开始排列GPU设备
-os.environ["CUDA_VISIBLE_DEVICES"] = "4,5"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #@profile
 class Solver(object):
@@ -34,6 +34,11 @@ class Solver(object):
             torch.backends.cudnn.benchmark = True
         
         self.nprocs = None
+
+        # save
+        for k, v in config.save.items():
+            if k != 'result_path':
+                config.save[k] = config.save['result_path'] + '/' +  v
                 
         #Distributed_2: 初始化进程组, 设置batchsize
         if config.parallel_type == 'Distributed' or config.parallel_type == 'Distributed_Apex':
@@ -76,6 +81,10 @@ class Solver(object):
             
         self.model.to(self.device)
        
+        # Data loader
+        self.train_loader, self.valid_loader, self.test_loader = self.get_data_loaders(
+            config)
+
         # criterion & optimizer
         #Distributed_4: 为了进一步加快训练速度，可以把损失函数也进行分布式计算???
         if config.parallel_type == 'Distributed' or config.parallel_type == 'Distributed_Apex' or config.parallel_type == 'Horovod':
@@ -97,6 +106,8 @@ class Solver(object):
             self.scheduler = None
         else:
             self.schedule_params = config.schedule_params[config.schedule_type]
+            if config.schedule_type == 'step':
+                schedule_params['params']['max_iter'] = len(data_loader)
             self.scheduler = get_schedule(self.optimizer, config.schedule_type, self.schedule_params)
 
 
@@ -121,10 +132,6 @@ class Solver(object):
                 self.model = apex.parallel.DistributedDataParallel(self.model, delay_allreduce=True) #增加时间???
             if config.parallel_type == 'Horovod':
                 hvd.broadcast_parameters(self.model.state_dict(), root_rank=0)
-
-        # Data loader
-        self.train_loader, self.valid_loader, self.test_loader = self.get_data_loaders(
-            config)
         
         # log
         self.summary_writer = SummaryWriter(log_dir=config.save['log_path'])
