@@ -1,12 +1,14 @@
 import random
 import cv2
 import numpy as np
+import albumentations as A
 from albumentations import DualTransform, ImageOnlyTransform
-from albumentations.augmentations.functional import crop
+#from albumentations.augmentations.functional import crop
 from albumentations import Compose, RandomBrightnessContrast, \
     HorizontalFlip, FancyPCA, HueSaturationValue, OneOf, ToGray, \
     ShiftScaleRotate, ImageCompression, PadIfNeeded, GaussNoise, GaussianBlur
 from albumentations.pytorch.functional import img_to_tensor
+from albumentations.pytorch.transforms import ToTensorV2 
 import torch
 
 def isotropically_resize_image(img, size, interpolation_down=cv2.INTER_AREA, interpolation_up=cv2.INTER_CUBIC):
@@ -67,7 +69,7 @@ class RandomSizedCropNonEmptyMaskIfExists(DualTransform):
         self.w2h_ratio = w2h_ratio
 
     def apply(self, img, x_min=0, x_max=0, y_min=0, y_max=0, **params):
-        cropped = crop(img, x_min, y_min, x_max, y_max)
+        cropped = A.crop(img, x_min, y_min, x_max, y_max)
         return cropped
 
     @property
@@ -102,30 +104,102 @@ class RandomSizedCropNonEmptyMaskIfExists(DualTransform):
         return "min_max_height", "height", "width", "w2h_ratio"
 
 
+def create_train_transforms2(size=300):
+    return Compose([
+            A.Resize(size, size, p=1),
+            A.HorizontalFlip(p = 0.5),
+            # A.Transpose(),
+            A.OneOf([
+                A.GaussNoise(),
+            ], p=0.3),
+            A.OneOf([
+                A.MotionBlur(p=0.2),
+                A.MedianBlur(blur_limit=3, p=0.1),
+                A.Blur(blur_limit=3, p=0.1),
+                A.GlassBlur(p=0.2),
+                
+            ], p=0.5),
+            A.OneOf([
+                A.OpticalDistortion(p=0.3),
+                A.GridDistortion(p=0.1),
+                # A.IAAPiecewiseAffine(p=0.3),
+                A.PiecewiseAffine(p=0.3),
+            ], p=0.5),
+            A.OneOf([
+                A.CLAHE(clip_limit=2),
+                # A.IAASharpen(),
+                # A.IAAEmboss(),
+                A.Sharpen(),
+                A.Emboss(),
+                A.RandomBrightnessContrast(),
+            ], p=0.5),
+            A.HueSaturationValue(p=0.3),
+            
+            # 灰度
+            A.OneOf([
+                A.Equalize(p=0.5),
+                A.ToGray(p=0.2),
+            ], p=0.5),
+            
+            # 压缩
+            A.ImageCompression(quality_lower=5, quality_upper=60, p=0.1),
+            # 下雨
+            A.RandomRain(p=0.1),
+            A.RandomSunFlare(flare_roi=(0.1, 0.1, 0.9, 0.9), angle_lower=0, angle_upper=1,num_flare_circles_lower=6, num_flare_circles_upper=10,src_radius=400, src_color=(255, 255, 255), p=0.2),
+            # 加小块
+            A.CoarseDropout(min_holes=10,max_holes=40, min_height=4,max_height=8, min_width=4,max_width=8, fill_value=0, always_apply=False, p=0.3),
+            # 反色，颜色变换
+            A.OneOf([
+                A.InvertImg(p=0.7),
+                A.Solarize(p=0.3),
+            ], p=0.3),
+
+            # 旋转缩放
+            A.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45, p=0.2)
+            #A.Normalize(
+            #    mean=[0.485, 0.456, 0.406],
+            #    std=[0.229, 0.224, 0.225],
+            #),
+            #ToTensorV2()
+        ])
+
 def create_train_transforms(size=300):
     return Compose([
+        #压缩？？？
         ImageCompression(quality_lower=60, quality_upper=100, p=0.5),
+        #高斯噪声
         GaussNoise(p=0.1),
+        #高斯模糊
         GaussianBlur(blur_limit=3, p=0.05),
+        #水平翻转
         HorizontalFlip(),
+        #缩放
         OneOf([
             IsotropicResize(max_side=size, interpolation_down=cv2.INTER_AREA, interpolation_up=cv2.INTER_CUBIC),
             IsotropicResize(max_side=size, interpolation_down=cv2.INTER_AREA, interpolation_up=cv2.INTER_LINEAR),
             IsotropicResize(max_side=size, interpolation_down=cv2.INTER_LINEAR, interpolation_up=cv2.INTER_LINEAR),
         ], p=1),
+        #填充
         PadIfNeeded(min_height=size, min_width=size, border_mode=cv2.BORDER_CONSTANT),
+        #随机亮度对比，？？？， 色调饱和度值
         #OneOf([RandomBrightnessContrast(), FancyPCA(), HueSaturationValue()], p=0.7),
+        #变灰
         #ToGray(p=0.2),
+        #旋转
         ShiftScaleRotate(shift_limit=0.1, scale_limit=0.2, rotate_limit=10, border_mode=cv2.BORDER_CONSTANT, p=0.5),
     ]
     )
 
-
 def create_val_transforms(size=300):
     return Compose([
+        #cv2.INTER_AREA用像素面积关系重采样
+        #cv2.INTER_CUBIC 双三次插值
         IsotropicResize(max_side=size, interpolation_down=cv2.INTER_AREA, interpolation_up=cv2.INTER_CUBIC),
+        #填充，这里是填充黑色
         PadIfNeeded(min_height=size, min_width=size, border_mode=cv2.BORDER_CONSTANT),
     ])
+
+
 
 def direct_val(imgs,size):
     #img 输入为RGB顺序
@@ -142,20 +216,36 @@ def direct_val(imgs,size):
 if __name__ == '__main__':
     import cv2
     from albumentations.pytorch.functional import img_to_tensor
-    img_path = '/home/kezhiying/data/sunzhihao/dataset/forgery_face_extract_retina/Training/image/train_release/18/aa7bea824ae90ec73ab2501c06d070c8/frame00014.png'
+    img_path = './frame00014.png'
     #img_path = '/home/kezhiying/data/sunzhihao/dataset/forgery_face_extract_retina/Validation/image/val_perturb_release/17/b7e4952e634f722220aabec3b4212bd8/frame00036.png'
     image = cv2.imread(img_path, cv2.IMREAD_COLOR)
-    import matplotlib.pyplot as plt
-    plt.imshow(image)
+    print(image.shape)
+    image = cv2.resize(image, (0, 0), fx=1, fy=1.2, interpolation=cv2.INTER_CUBIC)
+    
+    #image.reshape(162,150,3)
+    #print(image_resize.shape)
+    print(image.shape)
+    #import matplotlib.pyplot as plt
+    #plt.imshow(image)
     cv2.imwrite("./img1.png", image)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     cv2.imwrite("./img2.png", image) 
     #transforms = create_train_transforms(size=380)
-    transforms = create_val_transforms(size=380)
-    image = transforms(image=image)["image"]
+    transforms = create_train_transforms(size=380)
+    transforms2 = create_train_transforms2(size=380)
+    image2 = transforms(image=image)["image"]
+    image3 = transforms2(image=image)["image"]
+    print(image2.shape)
+    print(image3.shape)
+   # print((image2 == image3).all())
     normalize = {
         "mean": [0.485, 0.456, 0.406],
         "std": [0.229, 0.224, 0.225]
     }
-    cv2.imwrite("./img3.png", image)
-    image = img_to_tensor(image, normalize)
+    #from torchvision import transforms as T
+    #Norm_ = T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    #image = Norm_(image)
+    cv2.imwrite("./img3_1.png", image2)
+    cv2.imwrite("./img3_2.png", image3)
+    #image = img_to_tensor(image, normalize)
+    #cv2.imwrite("./img4.png", image3)
