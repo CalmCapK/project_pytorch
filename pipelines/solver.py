@@ -2,6 +2,7 @@ import apex
 from apex import amp
 import os
 import horovod.torch as hvd
+import numpy as np
 import time 
 from tensorboardX import SummaryWriter
 import torch
@@ -25,7 +26,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #@profile
 class Solver(object):
-    @profile
+    #@profile
     def __init__(self, config):
         # seed
         if config.seed is not None:
@@ -101,15 +102,14 @@ class Solver(object):
             self.optimizer = get_optimizer(self.model, config.optimizer_type, config.optimizer_params[config.optimizer_type])
             # ???
             # self.optimizer = torch.nn.DataParallel(self.optimizer, device_ids=config.gpu)
-        if config.schedule_type == 'no':
+        if config.schedule_type == 'no' or config.mode != 'train':
             self.schedule_params = None
             self.scheduler = None
         else:
             self.schedule_params = config.schedule_params[config.schedule_type]
-            if config.schedule_type == 'step':
-                schedule_params['params']['max_iter'] = len(data_loader)
+            if config.schedule_type == 'poly':
+                self.schedule_params['params']['max_iter'] = len(self.train_loader)
             self.scheduler = get_schedule(self.optimizer, config.schedule_type, self.schedule_params)
-
 
         if config.use_amp:
             self.scalar = GradScaler()
@@ -175,7 +175,7 @@ class Solver(object):
                                      dataset_params=dataset_params,
                                      parallel_type=config.parallel_type)
         return train_loader, valid_loader, test_loader
-    @profile
+    #@profile
     def train_and_valid(self, config):
         total_time = 0.0
         total_epoch = 0
@@ -256,9 +256,12 @@ class Solver(object):
  
 
     def test(self, config):
-        test_record, test_result = test_epoch(
-            0, self.model, self.test_loader, self.device, self.criterion, config.parallel_type, self.nprocs)
+        test_record, test_result, test_total_metric, test_average_metric = test_epoch(
+            0, self.model, self.test_loader, self.device, self.criterion, config.parallel_type, self.nprocs)  
         if config.local_rank == 0:
+            test_record.update(test_total_metric)
+            for k,v in test_average_metric.items():
+                test_record['avg_'+k] = v
             record_epoch(mode='test', epoch=1, total_epoch=1,
                      record=test_record, record_path=config.save['test_checkpoint_file'])
         #label: [batchsize x n]x(total/batchsize) 
@@ -267,8 +270,12 @@ class Solver(object):
             datas = []
             for preds, labels, infos in zip(test_result[0], test_result[1], test_result[2]):
                 for i in range(len(infos[0])): #shape: 1, 1, 3
-                #print(preds[i].data)
-                    data = [infos[0][i], labels[i].data.item(), preds[i].data.max(0)[1].item()]
+                    #图片路径，label, 预测分类
+                    #numpy str, numpy.int, numpy.array 
+                    #data = [infos[0][i], labels[i], np.argmax(preds[i], axis=0)]
+                    data = [infos[0][i], np.argmax(preds[i], axis=0)]
+                    #tensor
+                    #data = [infos[0][i], labels[i].data.item(), preds[i].data.max(0)[1].item()]
                     datas.append(data)
             write_result_csv(config.save['test_ans_file'], datas)
 
@@ -313,7 +320,13 @@ class Solver(object):
                 for i in range(len(infos[0])): #shape: 1, 1, 3
                     out = F.softmax(preds[i])
                     data = out.data.tolist() #out = out[:,0:3].data.cpu().numpy().tolist()
-                    datas.append(data)
+                    #根据需要修改
+                    #datas.append(data)
+                    #图片路径，预测为fake概率
+                    #lb = 1 if data[1]>=data[0] else 0
+                    #datas.append([os.path.basename(infos[0][i])[:-4]+'.jpg', lb])
+                    #datas.append([infos[0][i], lb])
+                    datas.append([os.path.basename(infos[0][i])[:-4]+'.jpg', data[1]])
             write_result_csv(config.save['infer_ans_file'], datas)
             print('infer done')
             return datas

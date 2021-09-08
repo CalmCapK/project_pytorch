@@ -46,16 +46,17 @@ def accuracy(target, output, topk=(1, )):
 
 #label: [(batchsize x n)]x(total/batchsize) 
 #pred: [(batchsize x n) x 3]x(total/batchsize) 
-@profile
+#@profile
 def cal_binary_metric(target, output):
     #target = torch.from_numpy(np.array([0, 0, 1, 1]))
     #target = [target]
     #output = torch.from_numpy(np.random.rand(4,2))
     #output = F.softmax(output, dim=1)
     #output = [output]
-    output = [torch.sigmoid(x).cpu().detach().numpy() for x in output]
-    target = [x.cpu().detach().numpy() for x in target]
-   
+    #tensor gpu
+    #output = [torch.sigmoid(x).cpu().detach().numpy() for x in output]
+    #target = [x.cpu().detach().numpy() for x in target]
+    #numpy
     output = np.concatenate((output),axis=0)
     target = np.concatenate((target),axis=0)
     output_label = np.argmax(output, axis=1)
@@ -100,21 +101,22 @@ def cal_binary_metric(target, output):
      
     #print(classification_report(target, output_label, target_names=['c0', 'c1']))  
     metric = {
-        'rec': rec,
-        'fpr': fpr,
-        'spe': spe,
-        'pre': pre,
+        'rec': rec.item(),
+        'fpr': fpr.item(),
+        'spe': spe.item(),
+        'pre': pre.item(),
         'acc': acc,
-        'f1': f1,
-        'auc': auc,
-        'ap': ap,
-        'rec_2' : rec_2,
-        'pre_2': pre_2,
-        'acc_2': acc_2,
-        'f1_2': f1_2
+        'f1': f1.item(),
+        'auc': auc.item(),
+        'ap': ap.item(),
+        'rec_2' : rec_2.item(),
+        'pre_2': pre_2.item(),
+        'acc_2': acc_2.item(),
+        'f1_2': f1_2.item()
     }
     return metric
 
+#未修改多类
 #label: [(batchsize x n)]x(total/batchsize) 
 #pred: [(batchsize x n) x 3]x(total/batchsize) 
 def cal_multiclass_metric(target, output):

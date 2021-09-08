@@ -1,5 +1,6 @@
 import cv2
 import horovod.torch as hvd
+import numpy as np
 from PIL import Image, ImageFile
 from random import shuffle
 import torch
@@ -7,6 +8,7 @@ from torch.nn import parameter
 from torch.utils import data
 from torchvision import transforms as T
 from dataset.transforms import create_train_transforms, create_val_transforms
+from dataset.transforms import create_train_transforms2
 from albumentations.pytorch.functional import img_to_tensor
 from tools import utils
 
@@ -64,7 +66,7 @@ class ImageFolder(data.Dataset):
                 result_labels.append(label)
                 result_paths.append(img_path)
         elif self.mode == 'infer':
-            img_path = self.data[0][index]
+            img_path = self.data[0][index][0]
             image = self.load_sample(img_path)
             result_images.append(image)
             result_paths.append(img_path)
@@ -77,13 +79,14 @@ class ImageFolder(data.Dataset):
             result_labels.append(label)
             result_paths.append(img_path)
 		#result_image: n x 3 x 244 x 244,  result_label: n,  result_paths: [...] len(n)
-        return torch.cat([x.unsqueeze(0) for x in result_images]),  torch.tensor(result_labels), result_paths
+        #return torch.cat([x.unsqueeze(0) for x in result_images]),  torch.tensor(result_labels), result_paths
+        return torch.stack(result_images, dim=0), torch.tensor(np.array(result_labels)), result_paths
 
     def transforms2(self, img_path):
         image = cv2.imread(img_path, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if self.mode == 'train':
-            transforms = create_train_transforms(size=380)
+            transforms = create_train_transforms2(size=380)
         elif self.mode == 'test' or self.mode == 'valid' or self.mode == 'infer':
             transforms = create_val_transforms(size=380)
         image = transforms(image=image)["image"]
@@ -124,7 +127,7 @@ class ImageFolder(data.Dataset):
     def __len__(self):
         return self.data_num
 
-@profile
+#@profile
 def get_loader(data_list_path, batch_size, shuffle=True, num_workers=1,
                mode='train', balance=False, model_params=None, dataset_params=None, parallel_type=''):
     """Builds and returns Dataloader."""

@@ -6,7 +6,7 @@ from tools.eval import accuracy, cal_multiclass_metric, cal_binary_metric
 from tools.utils import reduce_mean, reduce_mean_hvd, all_gather_tensor, all_gather_tensor_hvd
 
 
-@profile
+#@profile
 def test_epoch(current_epoch, model, data_loader, device, criterion, parallel_type, nprocs):
     model.train(False)
     model.eval()
@@ -27,13 +27,17 @@ def test_epoch(current_epoch, model, data_loader, device, criterion, parallel_ty
             image = image.to(device)
             label = label.to(device)
             out = model(image)
+            #需要torch gpu
+            loss = criterion(out, label)
+            acc = accuracy(label, out, topk=(1,))
 
+            label = label.cpu().detach().numpy()  #(36, )
+            out = out.cpu().detach().numpy()      #(36, 2)
+            
             preds.append(out)
             labels.append(label)
             infos.append(info)
             
-            loss = criterion(out, label)
-            acc = accuracy(label, out, topk=(1,))
             
             if parallel_type == 'Distributed' or parallel_type == 'Distributed_Apex':
                 #Distributed_7: 强制同步
@@ -61,6 +65,7 @@ def test_epoch(current_epoch, model, data_loader, device, criterion, parallel_ty
         #Epoch_loss 平均
         #Epoch acc 平均
         #Metic  总 或 平均
+        #未修改numpy调用reduce!!!
         # cal total metric
         if parallel_type == 'Distributed' or parallel_type == 'Distributed_Apex':
             torch.distributed.barrier()

@@ -5,7 +5,7 @@ import yaml
 
 from pipelines.solver import Solver
 
-@profile
+#@profile
 def main(local_rank, config):
     print("local_rank:", local_rank)
     config.local_rank = local_rank
@@ -16,12 +16,12 @@ def main(local_rank, config):
     elif config.mode == 'test':
         solver.test(config)
     elif config.mode == 'infer':
-        infer_path_single = '/data_activate/kezhiying/testpj/ori/fake/malefamouspeoplephoto_96.png'
-        infer_path_fold = config.datasets[config.data_type]['infer_path']
+        #infer_path_single = '/data_activate/kezhiying/testpj/ori/fake/malefamouspeoplephoto_96.png'
+        #infer_path_fold = config.datasets[config.data_type]['infer_path']
         infer_path_list = config.datasets[config.data_type]['infer_list_path']
         #solver.infer(infer_path_single, config, mode='single')
-        #solver.infer(infer_path_list, config, mode='list')
-        solver.infer(infer_path_fold, config, mode='fold')
+        solver.infer(infer_path_list, config, mode='list')
+        #solver.infer(infer_path_fold, config, mode='fold')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

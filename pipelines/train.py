@@ -7,7 +7,7 @@ from tools.eval import accuracy, cal_multiclass_metric, cal_binary_metric
 from tools.utils import reduce_mean, reduce_mean_hvd, all_gather_tensor, all_gather_tensor_hvd
 from networks.losses import cal_balance_loss
 
-@profile
+#@profile
 def train_epoch(current_epoch, model, data_loader, device, criterion, optimizer, scheduler, schedule_params, parallel_type, nprocs, scaler, use_amp, summary_writer):
     model.train(True)
     labels = []
@@ -18,6 +18,7 @@ def train_epoch(current_epoch, model, data_loader, device, criterion, optimizer,
         epoch_acc = AverageMeter('acc', ':.3f')
         total_step = len(data_loader)
         for i, (image, label, info) in enumerate(tqdm(data_loader, ncols=80)):
+            #tensor
             #len(data_loader.dataset): dataset size
             #image: batchsize x n x 3 x 244 x 244
             #label: batchsize x n
@@ -36,13 +37,17 @@ def train_epoch(current_epoch, model, data_loader, device, criterion, optimizer,
                 out = model(image)
                 #loss = criterion(out, label)
                 loss = cal_balance_loss(criterion, out, label)
-
+            
+            #需要torch gpu
+            acc = accuracy(label, out, topk=(1,))
+            
+            label = label.cpu().detach().numpy()  #(36, )
+            out = out.cpu().detach().numpy()      #(36, 2)
+            
             preds.append(out)
-            infos.append(infos)
+            infos.append(info)
             labels.append(label)
                            
-            
-            acc = accuracy(label, out, topk=(1,))
 
             if parallel_type == 'Distributed' or parallel_type == 'Distributed_Apex':
                 #Distributed_7: 强制同步
@@ -110,6 +115,7 @@ def train_epoch(current_epoch, model, data_loader, device, criterion, optimizer,
         #Epoch acc 平均
         #Metic  总 或 平均
         # cal total metric
+        #未修改numpy使用reduce
         if parallel_type == 'Distributed' or parallel_type == 'Distributed_Apex':
             torch.distributed.barrier()
             labels_list, preds_list = all_gather_tensor(labels, preds, device, nprocs)

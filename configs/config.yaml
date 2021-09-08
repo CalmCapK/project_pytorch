@@ -1,5 +1,5 @@
 config_name: 'base'
-
+#infer 需要修改 mode, parallel_type(可选), is_load_model, data_type, save
 mode: 'train'  #train, test, infer
 gpu: [0,1]
 local_rank: 0
@@ -10,11 +10,10 @@ seed: 111
 use_amp: True
 parallel_type: 'DataParallel'  # Single , DataParallel, Distributed, Distributed_Apex, Horovod 
 data_type: 'ffac_24' 
-#data_type: 'testpj2' 
 
-model_type: 'resnet50'  #efficientnet-b7, resnet50
+model_type: 'efficientnet-b7'  #efficientnet-b7, resnet50
 optimizer_type: 'SGD'  # SGD、Adam
-schedule_type: 'cosineAnnWarm' #'no', 'poly', 'cosineAnnWarm'
+schedule_type: 'poly' #'no', 'poly', 'cosineAnnWarm'
 pretrained: True
 loss_type: 'CrossEntropyLoss'
 
@@ -38,13 +37,13 @@ datasets:
         infer_list_path: './tmp.txt'
 
     testpj2:
-        dataset_name: 'testpj'
+        dataset_name: 'testpj2'
         categorys: ['real', 'fake']
         #dataset_list_path
         train_list_path: '/home/kezhiying/testpj/txt_2/train_list.txt'
         valid_list_path: '/home/kezhiying/testpj/txt_2/valid_list.txt'
         test_list_path: '/home/kezhiying/testpj/txt_2/test_list.txt'
-        infer_list_path: './tmp.txt'
+        infer_list_path: '/home/kezhiying/testpj/txt_2/test_list.txt'
     
     ffac:
         ataset_name: 'ffac'
@@ -61,8 +60,13 @@ datasets:
         #dataset_list_path
         train_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/new_0.txt'
         valid_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/val_image_list.txt'
-        test_list_path: ''
-        infer_list_path: ''
+        test_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/val_image_list.txt'
+        #infer_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/val_image_list.txt'
+        #infer_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/ffac_test/ffac_test_err_ori.txt'
+        #infer_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/ffac_test/ffac_test_err_crop2.txt'
+        #infer_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac/crop/ffac_test/ffac_test/test_new.txt'
+        #infer_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac/crop/ffac_test/ffac_test/test_new_2.txt'
+        infer_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_24/ffac_test/ffac_test_full_crop2.txt'
 
     ffac_25:
         dataset_name: 'ffac_25'
@@ -91,8 +95,27 @@ datasets:
         test_list_path: ''
         infer_list_path: ''
 
+    ffac_13: #10fold
+        dataset_name: 'ffac_13'
+        categorys: ['real', 'fake']
+        #dataset_list_path
+        train_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_13/ffac_train_10fold/new_0.txt'
+        valid_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_13/val_image_list.txt'
+        test_list_path: ''
+        infer_list_path: ''
+
+    ffac_13_2: #5fold
+        dataset_name: 'ffac_13_2'
+        categorys: ['real', 'fake']
+        #dataset_list_path
+        #train_list_path: '/data/fanglingfei/workspace/FFAC1/data/ffac_train_5fold/train_0.txt'
+        train_list_path: '/home/kezhiying/train_0.txt'
+        valid_list_path: '/home/kezhiying/df_project/df_datasets_list/ffac_13/val_image_list.txt'
+        test_list_path: ''
+        infer_list_path: ''
 
 save:
+    result_path: './results'
     #result_path: '../results'
     #result_path: '../results_eb7' #
     #result_path: '../results_eb7_transform'  #
@@ -107,7 +130,12 @@ save:
     #result_path: '../results_rs50_poly_transform'   #  
     #result_path: '../results_rs50_poly_balance_transform'  #
     #result_path: '../results_rs50_cosineAnnWarm_balanceloss_transform' #
-    result_path: '../results_rs50_cosineAnnWarm_balanceloss_transform_lr01_epoch' #
+    #result_path: '../results_rs50_cosineAnnWarm_balanceloss_transform_lr01_epoch' #
+    #result_path: '../results_rs50_poly_balanceloss_transform2_lr01_epoch' #
+    #result_path: '../results_eb7_cosineAnnWarm_balanceloss_transform_lr01_epoch'
+    #result_path: '../results_eb7_poly_balanceloss_transform_lr01_epoch'
+    #result_path: '../results_eb7_poly_balanceloss_transform2_lr01_step'
+
     save_model_path: 'models'
     train_checkpoint_file: 'train_checkpoint.csv'
     valid_checkpoint_file: 'valid_checkpoint.csv'
@@ -118,7 +146,7 @@ save:
 
 
 load:
-    load_model_path: './results/models/resnet50_epoch_0_best.pth'
+    load_model_path: './weight/efficientnet-b7_epoch_4_best.pth'
 
 model_params:
     resnet50:
@@ -131,7 +159,7 @@ model_params:
         image_size: 224
         num_classes : 2
         num_epochs: 15
-        batch_size : 18 #64
+        batch_size : 18 #infer, test 64
 
 optimizer_params:
     SGD:
